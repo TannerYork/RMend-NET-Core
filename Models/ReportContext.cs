@@ -1,10 +1,14 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore;
 namespace RMendAPI.Models
 {
-    public class EmptyClass
+    public class ReportContext : DbContext
     {
-        public EmptyClass()
+        public ReportContext(DbContextOptions<ReportContext> options)
+            : base(options)
         {
         }
+
+        public DbSet<Report> Reports { get; set; }
     }
 }
