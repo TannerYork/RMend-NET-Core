@@ -4,8 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using RMendAPI.Models;
-
 namespace RMendAPI
 {
     public class Startup
@@ -17,10 +17,13 @@ namespace RMendAPI
 
         public IConfiguration Configuration { get; }
 
+        private static readonly InMemoryDatabaseRoot InMemoryDatabaseRoot = new InMemoryDatabaseRoot();
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ReportContext>(opt => opt.UseInMemoryDatabase("ReportList"));
+            services.AddDbContext<ReportContext>(opt => opt.UseInMemoryDatabase("ReportList", InMemoryDatabaseRoot));
+            services.AddDbContext<AuthorityContext>(opt => opt.UseInMemoryDatabase("AuthorityList", InMemoryDatabaseRoot));
             services.AddControllers();
         }
 
