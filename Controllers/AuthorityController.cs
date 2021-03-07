@@ -13,9 +13,9 @@ namespace RMendAPI.Controllers
     [ApiController]
     public class AuthorityController : ControllerBase
     {
-        private readonly AuthorityContext _context;
+        private readonly AppDbContext _context;
 
-        public AuthorityController(AuthorityContext context)
+        public AuthorityController(AppDbContext context)
         {
             _context = context;
         }
@@ -29,7 +29,7 @@ namespace RMendAPI.Controllers
 
         // GET: api/Authority/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Authority>> GetAuthority(long id)
+        public async Task<ActionResult<Authority>> GetAuthority(int id)
         {
             var authority = await _context.Authorities.FindAsync(id);
 
@@ -44,9 +44,9 @@ namespace RMendAPI.Controllers
         // PUT: api/Authority/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuthority(long id, Authority authority)
+        public async Task<IActionResult> PutAuthority(int id, Authority authority)
         {
-            if (id != authority.Id)
+            if (id != authority.AuthorityId)
             {
                 return BadRequest();
             }
@@ -80,12 +80,12 @@ namespace RMendAPI.Controllers
             _context.Authorities.Add(authority);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAuthority", new { id = authority.Id }, authority);
+            return CreatedAtAction("GetAuthority", new { id = authority.AuthorityId }, authority);
         }
 
         // DELETE: api/Authority/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAuthority(long id)
+        public async Task<IActionResult> DeleteAuthority(int id)
         {
             var authority = await _context.Authorities.FindAsync(id);
             if (authority == null)
@@ -99,9 +99,81 @@ namespace RMendAPI.Controllers
             return NoContent();
         }
 
-        private bool AuthorityExists(long id)
+        // GET: api/Authority/5/Reports
+        [HttpGet("{id}/Reports")]
+        public async Task<ActionResult<IEnumerable<Report>>> GetAuthorityReports(int id)
         {
-            return _context.Authorities.Any(e => e.Id == id);
+            return await _context.Reports
+                .Where(e => e.ReportId == id)
+                .ToListAsync();
+        }
+
+        // PUT: apit/Authority/5/Report/1
+        // TODO: Need to improve security for verifying report and authority connection
+        // TODO: Add ability to partially update reports
+        [HttpPut("{id}/Reports/{reportId}")]
+        public async Task<IActionResult> PutAuthorityReport(int id, int reportId, Report report)
+        {
+            if (id != report.AuthorityId)
+            {
+                return BadRequest();
+            }
+            if (report.Authority.AuthorityId != id) 
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(report).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch(DbUpdateConcurrencyException)
+            {
+                if (!ReportExist(reportId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+
+        }
+
+        // DELETE: api/Authority/5/Reports/1
+        // TODO: Need to improve security for verifying report and authority connection
+        [HttpDelete("{id}/Reports/{reportId}")]
+        public async Task<IActionResult> DeleteAuthorityReport(int id, int reportId)
+        {
+            var report = await _context.Reports.FindAsync(reportId);
+            if (report == null)
+            {
+                return NotFound();
+            }
+            if (report.Authority.AuthorityId != id)
+            {
+                return BadRequest();
+            }
+
+            _context.Reports.Remove(report);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool AuthorityExists(int id)
+        {
+            return _context.Authorities.Any(e => e.AuthorityId == id);
+        }
+
+        private bool ReportExist(int id)
+        {
+            return _context.Reports.Any(e => e.AuthorityId == id);
         }
 
     }

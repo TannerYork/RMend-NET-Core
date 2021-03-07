@@ -13,16 +13,16 @@ namespace RMendAPI.Controllers
     [ApiController]
     public class ReportsController : ControllerBase
     {
-        private readonly ReportContext _context;
+        private readonly AppDbContext _context;
 
-        public ReportsController(ReportContext context)
+        public ReportsController(AppDbContext context)
         {
             _context = context;
         }
 
         // GET: api/Reports
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReportDTO>>> GetReports()
+        public async Task<ActionResult<IEnumerable<UserReport>>> GetReports()
         {
             return await _context.Reports
                 .Select(x => ReportToDTO(x))
@@ -31,7 +31,7 @@ namespace RMendAPI.Controllers
 
         // GET: api/Reports/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ReportDTO>> GetReport(long id)
+        public async Task<ActionResult<UserReport>> GetReport(int id)
         {
             var report = await _context.Reports.FindAsync(id);
 
@@ -43,84 +43,48 @@ namespace RMendAPI.Controllers
             return ReportToDTO(report);
         }
 
-        // PUT: api/Reports/5
+        // POST: api/Reports
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutReport(long id, ReportDTO reportDTO)
+        [HttpPost]
+        public async Task<ActionResult<UserReport>> PostReport(UserReport userReport)
         {
-            if (id != reportDTO.Id)
-            {
-                return BadRequest();
-            }
-
-            var report = await _context.Reports.FindAsync(id);
-            if (report == null)
+            var authority = await _context.Authorities.FindAsync(userReport.AuthorityId);
+            if (authority == null)
             {
                 return NotFound();
             }
 
-            report.Name = reportDTO.Name;
-            report.IsPriority = reportDTO.IsPriority;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException) when (!ReportExists(id))
-            {
-                 return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Reports
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<ReportDTO>> PostReport(ReportDTO reportDTO)
-        {
             var report = new Report
             {
-                IsPriority = reportDTO.IsPriority,
-                Name = reportDTO.Name
+                Name = userReport.Name,
+                IsPriority = false,
+                AuthorityId = authority.AuthorityId,
+                Authority = authority
             };
 
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetReport),
-                new { id = report.Id },
-                ReportToDTO(report));
-        }
-
-        // DELETE: api/Reports/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteReport(long id)
-        {
-            var report = await _context.Reports.FindAsync(id);
-            if (report == null)
-            {
-                return NotFound();
-            }
-
-            _context.Reports.Remove(report);
+            report = await _context.Reports.FindAsync(report.ReportId);
+            authority.Reports.Add(report);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CreatedAtAction(
+                nameof(GetReport),
+                new { id = report.ReportId },
+                ReportToDTO(report));
         }
 
         private bool ReportExists(long id)
         {
-            return _context.Reports.Any(e => e.Id == id);
+            return _context.Reports.Any(e => e.ReportId == id);
         }
 
-        private static ReportDTO ReportToDTO(Report report) =>
-            new ReportDTO
+        private static UserReport ReportToDTO(Report report) =>
+            new UserReport
             {
-                Id = report.Id,
-                Name = report.Name,
-                IsPriority = report.IsPriority
+                ReportId = report.ReportId,
+                Name = report.Name
             };
     }
 }

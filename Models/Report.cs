@@ -1,18 +1,22 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace RMendAPI.Models
 {
     public class Report
     {
-        public long Id { get; set; }
+        public int ReportId { get; set; }
         public string Name { get; set; }
         public bool IsPriority { get; set; }
-        public string Secret { get; set; }
+
+
+        [ForeignKey("Authority")]
+        public int AuthorityId { get; set; }
+        public Authority Authority { get; set; }
     }
 
-    public class ReportDTO
+    public class UserReport
     {
-        public long Id { get; set; }
+        public int ReportId { get; set; }
         public string Name { get; set; }
-        public bool IsPriority { get; set; }
     }
 }

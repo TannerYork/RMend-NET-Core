@@ -17,14 +17,13 @@ namespace RMendAPI
 
         public IConfiguration Configuration { get; }
 
-        private static readonly InMemoryDatabaseRoot InMemoryDatabaseRoot = new InMemoryDatabaseRoot();
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ReportContext>(opt => opt.UseInMemoryDatabase("ReportList", InMemoryDatabaseRoot));
-            services.AddDbContext<AuthorityContext>(opt => opt.UseInMemoryDatabase("AuthorityList", InMemoryDatabaseRoot));
+            // TODO: Change InMemory database to proper SQL database to test relations
+            services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("Database"));
             services.AddControllers();
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
